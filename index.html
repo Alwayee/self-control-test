@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>你的自控力有多强？</title>
+<style>
+  :root {
+    --bg: #f6f4ef;
+    --card: #fffdf9;
+    --ink: #1c1b19;
+    --ink-soft: #6b6862;
+    --line: #e7e3da;
+    --accent: #b8583d;
+    --accent-soft: #f0e2dc;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    justify-content: center;
+    padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+    min-height: 100%;
+  }
+  .app {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100vh - 48px);
+  }
+  .screen { animation: fade .4s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* ---- Home ---- */
+  .home { text-align: left; }
+  .kicker {
+    font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin-bottom: 20px;
+  }
+  h1 {
+    font-size: 34px; line-height: 1.25; font-weight: 700; letter-spacing: -.01em;
+    margin-bottom: 16px;
+  }
+  .subtitle { font-size: 16px; color: var(--ink-soft); margin-bottom: 40px; }
+  .meta { font-size: 14px; color: var(--ink-soft); margin-top: 20px; text-align: center; }
+  .disclaimer { font-size: 12px; color: var(--ink-soft); margin-top: 32px; opacity: .8; }
+
+  .btn {
+    display: block; width: 100%; border: none; cursor: pointer;
+    background: var(--ink); color: #fff;
+    font-size: 17px; font-weight: 600; font-family: inherit;
+    padding: 17px; border-radius: var(--radius);
+    transition: transform .12s ease, opacity .12s ease;
+  }
+  .btn:active { transform: scale(.985); }
+  .btn:disabled { opacity: .3; cursor: default; }
+  .btn-ghost {
+    background: transparent; color: var(--ink-soft); border: 1px solid var(--line);
+  }
+
+  /* ---- Progress ---- */
+  .progress-row {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 32px;
+  }
+  .progress-track {
+    flex: 1; height: 4px; background: var(--line); border-radius: 4px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: var(--accent); border-radius: 4px;
+    transition: width .35s ease; width: 0;
+  }
+  .progress-num { font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+  /* ---- Question ---- */
+  .question {
+    font-size: 23px; line-height: 1.4; font-weight: 600; letter-spacing: -.01em;
+    margin-bottom: 32px; min-height: 96px;
+  }
+  .options { display: flex; flex-direction: column; gap: 12px; }
+  .option {
+    display: flex; align-items: center; gap: 14px;
+    width: 100%; text-align: left; cursor: pointer;
+    background: var(--card); border: 1.5px solid var(--line);
+    border-radius: 14px; padding: 15px 18px;
+    font-size: 16px; font-family: inherit; color: var(--ink);
+    transition: border-color .15s ease, background .15s ease, transform .1s ease;
+  }
+  .option:active { transform: scale(.99); }
+  .option .dot {
+    width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+    border: 2px solid var(--line); position: relative; transition: border-color .15s;
+  }
+  .option.selected {
+    border-color: var(--accent); background: var(--accent-soft);
+  }
+  .option.selected .dot { border-color: var(--accent); }
+  .option.selected .dot::after {
+    content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--accent);
+  }
+  .nav { margin-top: 28px; }
+
+  /* ---- Result ---- */
+  .result { text-align: center; }
+  .score-label { font-size: 14px; color: var(--ink-soft); margin-bottom: 8px; }
+  .score-big {
+    font-size: 72px; font-weight: 700; letter-spacing: -.03em; line-height: 1;
+    color: var(--accent);
+  }
+  .score-big span { font-size: 26px; color: var(--ink-soft); font-weight: 500; }
+  .result-card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 28px 24px; margin: 36px 0 24px;
+    text-align: left;
+  }
+  .result-card h2 {
+    font-size: 22px; font-weight: 700; margin-bottom: 14px; letter-spacing: -.01em;
+  }
+  .result-card p { font-size: 15.5px; color: #35332f; white-space: pre-line; }
+  .result-card .note {
+    margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line);
+    font-size: 14px; color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+  <main class="app" id="app"></main>
+<script>
+/* =========================================================================
+   测试配置 —— 所有文案集中在这里，方便以后修改 / 替换量表
+   参考：IPIP-VIA-R  Self-regulation / Self-control 4-item Short Scale
+   （仅为自我探索测试，非医学或心理诊断工具）
+   ========================================================================= */
+const TEST = {
+  title: "你的自控力有多强？",
+  subtitle: "4 道题，看看你在欲望、冲动和长期目标之间，通常会站在哪一边。",
+  meta: "共 4 题 · 约 30 秒",
+
+  // 5 级选项（从 1 到 5）
+  options: [
+    "非常不像我",
+    "比较不像我",
+    "一般",
+    "比较像我",
+    "非常像我",
+  ],
+
+  // 题目：reverse=false 正向计分，reverse=true 反向计分
+  questions: [
+    { text: "我是一个非常自律的人。", reverse: false },
+    { text: "即使一件事现在让我感觉很好，但如果我知道它长期对我不好，我通常能够放弃它。", reverse: false },
+    { text: "我有时会被消费、吃东西或其他即时冲动带着走，做得比原本打算的更多。", reverse: true },
+    { text: "面对强烈冲动时，我很容易妥协。", reverse: true },
+  ],
+
+  // 结果分档（按总分区间，min/max 均含端点）
+  results: [
+    {
+      min: 4, max: 8,
+      title: "你更容易跟着当下感觉走",
+      body: "你对即时感受和冲动比较敏感。\n当「现在想要」和「以后更好」发生冲突时，你更容易选择前者。\n这不等于你没有自控力，更可能意味着你需要依靠环境、规则或外部结构，而不是单纯依靠意志力。",
+    },
+    {
+      min: 9, max: 12,
+      title: "你的自控力很看状态",
+      body: "你并不是完全控制不住自己。\n当目标清楚、状态不错的时候，你可以克制冲动；但疲惫、压力大或诱惑很强的时候，你的长期计划比较容易让位给当下感受。",
+    },
+    {
+      min: 13, max: 16,
+      title: "你通常能够管住自己",
+      body: "大多数时候，你能够让长期目标压过短期诱惑。\n你不是没有欲望，而是比较能够在「我现在想要」和「这对以后有没有好处」之间做选择。",
+    },
+    {
+      min: 17, max: 20,
+      title: "你有很强的自我约束倾向",
+      body: "你通常很擅长延迟满足，也比较能够抵抗即时诱惑。\n对你来说，「我想不想」未必是决定行动的最重要因素，「这是不是我真正想长期坚持的」往往更重要。",
+      note: "自控力高不一定永远是好事。有时候允许自己放松和改变计划，同样是一种能力。",
+    },
+  ],
+};
+
+/* =========================================================================
+   计分逻辑 —— 单独写清楚，方便以后替换量表
+   ========================================================================= */
+// answers: 数组，每项为 1~5（用户选择的原始档位）
+function scoreItem(rawValue, reverse) {
+  // 正向：1->1 ... 5->5 ；反向：1->5 ... 5->1
+  return reverse ? (6 - rawValue) : rawValue;
+}
+
+function computeResult(answers) {
+  const total = answers.reduce((sum, raw, i) => {
+    return sum + scoreItem(raw, TEST.questions[i].reverse);
+  }, 0);
+
+  const MIN = 4, MAX = 20;
+  // 自控力指数（百分制），四舍五入为整数
+  const index = Math.round(((total - MIN) / (MAX - MIN)) * 100);
+
+  const bucket = TEST.results.find(r => total >= r.min && total <= r.max);
+  return { total, index, bucket };
+}
+
+/* =========================================================================
+   状态与渲染
+   ========================================================================= */
+const app = document.getElementById("app");
+let answers = [];      // 已作答的原始值 1~5
+let current = 0;       // 当前题目索引
+
+function start() {
+  answers = new Array(TEST.questions.length).fill(null);
+  current = 0;
+  renderQuestion();
+}
+
+/* ---- 首页 ---- */
+function renderHome() {
+  app.innerHTML = `
+    <section class="screen home">
+      <div class="kicker">自我探索测试</div>
+      <h1>${TEST.title}</h1>
+      <p class="subtitle">${TEST.subtitle}</p>
+      <button class="btn" id="startBtn">开始测试</button>
+      <p class="meta">${TEST.meta}</p>
+      <p class="disclaimer">这只是一个自我探索测试，不是医学或心理诊断工具。</p>
+    </section>
+  `;
+  document.getElementById("startBtn").addEventListener("click", start);
+}
+
+/* ---- 答题页 ---- */
+function renderQuestion() {
+  const q = TEST.questions[current];
+  const total = TEST.questions.length;
+  const pct = ((current) / total) * 100;
+
+  const optionsHtml = TEST.options.map((label, idx) => {
+    const value = idx + 1;
+    const selected = answers[current] === value ? "selected" : "";
+    return `
+      <button class="option ${selected}" data-value="${value}">
+        <span class="dot"></span><span>${label}</span>
+      </button>`;
+  }).join("");
+
+  const canNext = answers[current] !== null;
+  const isLast = current === total - 1;
+
+  app.innerHTML = `
+    <section class="screen">
+      <div class="progress-row">
+        <div class="progress-track"><div class="progress-fill" id="fill"></div></div>
+        <div class="progress-num">${current + 1} / ${total}</div>
+      </div>
+      <div class="question">${q.text}</div>
+      <div class="options">${optionsHtml}</div>
+      <div class="nav">
+        <button class="btn" id="nextBtn" ${canNext ? "" : "disabled"}>
+          ${isLast ? "查看结果" : "下一题"}
+        </button>
+        ${current > 0 ? `<button class="btn btn-ghost" id="backBtn" style="margin-top:12px;">上一题</button>` : ""}
+      </div>
+    </section>
+  `;
+
+  // 进度条动画
+  requestAnimationFrame(() => {
+    document.getElementById("fill").style.width = pct + "%";
+  });
+
+  app.querySelectorAll(".option").forEach(btn => {
+    btn.addEventListener("click", () => {
+      answers[current] = Number(btn.dataset.value);
+      // 选中后短暂延迟自动进入下一题
+      app.querySelectorAll(".option").forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      setTimeout(goNext, 260);
+    });
+  });
+
+  const nextBtn = document.getElementById("nextBtn");
+  if (nextBtn) nextBtn.addEventListener("click", goNext);
+  const backBtn = document.getElementById("backBtn");
+  if (backBtn) backBtn.addEventListener("click", () => { current--; renderQuestion(); });
+}
+
+function goNext() {
+  if (answers[current] === null) return;
+  if (current < TEST.questions.length - 1) {
+    current++;
+    renderQuestion();
+  } else {
+    renderResult();
+  }
+}
+
+/* ---- 结果页 ---- */
+function renderResult() {
+  const { index, bucket } = computeResult(answers);
+  const noteHtml = bucket.note ? `<div class="note">${bucket.note}</div>` : "";
+
+  app.innerHTML = `
+    <section class="screen result">
+      <div class="score-label">你的自控力指数</div>
+      <div class="score-big">${index}<span> / 100</span></div>
+      <div class="result-card">
+        <h2>${bucket.title}</h2>
+        <p>${bucket.body}</p>
+        ${noteHtml}
+      </div>
+      <button class="btn" id="restartBtn">重新测试</button>
+    </section>
+  `;
+  document.getElementById("restartBtn").addEventListener("click", renderHome);
+}
+
+/* 启动 */
+renderHome();
+</script>
+</body>
+</html>
+
